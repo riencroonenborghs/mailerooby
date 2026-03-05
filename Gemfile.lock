@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    mailerooby (0.1.0)
+    mailerooby (0.1.1)
       httparty (~> 0.21.0)
 
 GEM
