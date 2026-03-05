@@ -8,38 +8,54 @@ class MaileroobyDeliveryMethod
     attr_accessor :settings
 
     def deliver!(mail)
-        from = mail.from.join(', ')
-        to = mail.to.join(', ')
-        subject = mail.subject
-        body = mail.body.raw_source
-        cc = mail.cc.join(', ') if mail.cc.present?
-        bcc = mail.bcc.join(', ') if mail.bcc.present?
-        reply_to = mail.reply_to if mail.reply_to.present?
-        attachments = extract_attachments(mail)
-        # Send the email via Maileroob API
-        response = Mailerooby::EmailSender.send_email(from: from, 
-                                                      to: to, 
-                                                      subject: subject, 
-                                                      body: body, 
-                                                      cc: cc, 
-                                                      bcc: bcc, 
-                                                      reply_to: reply_to, 
-                                                      attachments: attachments)
-    
-        # Check the response and raise an error if necessary
-        handle_response(response)
+      @mail = mail
+
+      from = { address: mail.from[0] }
+      to = parse_address(:to)
+      cc = parse_address(:cc)
+      bcc = parse_address(:bcc)
+      reply_to = parse_address(:reply_to)
+      subject = mail.subject
+      plain = mail.body.raw_source
+      html = mail.body.raw_source
+      attachments = parse_attachments
+
+      # Send the email via Maileroob API
+      response = Mailerooby::EmailSender.send_email(
+        from: from, 
+        to: to,
+        cc: cc,
+        bcc: bcc,
+        reply_to: reply_to,
+        subject: subject,
+        plain: plain,
+        html: html,
+        attachments: attachments
+      )
+  
+      # Check the response and raise an error if necessary
+      handle_response(response)
     end
     
     private
+    
+    def parse_address(address)
+      return nil unless @mail.send(address).present?
 
-    def extract_attachments(mail)
-        mail.attachments.map do |attachment|
-          {
-            name: attachment.filename,
-            content: attachment.body.raw_source,
-            type: attachment.mime_type
-          }
-        end
+      [@mail.send(address)].flatten.map do |x|
+        { address: x }
+      end
+    end
+
+    def parse_attachments
+      @mail.attachments.map do |attachment|
+        {
+          file_name: attachment.filename,
+          content: attachment.body.raw_source,
+          content_type: attachment.mime_type,
+          inline: false
+        }
+      end
     end
     
     def handle_response(response)
