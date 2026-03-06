@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    mailerooby (0.1.2)
+    mailerooby (0.1.3)
       httparty (~> 0.21.0)
       zeitwerk
 
