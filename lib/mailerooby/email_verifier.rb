@@ -1,41 +1,33 @@
-require 'httparty'
+# frozen_string_literal: true
+
+require "httparty"
 
 module Mailerooby
-    class ValidationError < StandardError; end
-    class Error < StandardError; end
-    class BadRequestError < Error; end
-    class UnauthorizedError < Error; end
-    class GeneralAPIError < Error; end
+  class EmailVerifier
+    include HTTParty
 
-    class EmailVerifier
-        include HTTParty
-        base_uri 'https://verify.maileroo.net/check'
+    base_uri "https://api.zeruh.com/v1/verify"
 
-        def self.verify_email(email_address)
-            headers = {
-                'X-API-Key' => Mailerooby.verifying_api_key,
-                'Content-Type' => 'application/json'
-            }
-            body = { email_address: email_address }.to_json
-            response = post(base_uri, headers: headers, body: body)
+    def self.verify_email(email_address:)
+      raise ValidationError, "Missing email address" unless email_address
 
-            case response.code
-            when 400
-              raise BadRequestError, "Bad request: #{response.body}"
-            when 401
-              raise UnauthorizedError, "Unauthorized: #{response.body}"
-            when 200
-              JSON.parse(response.body)
-            else
-              raise GeneralAPIError, "API Error: #{response.body}"
-            end
-        end
+      headers = {
+        "X-Api-Key" => ::Mailerooby.verifying_api_key,
+        "Content-Type" => "application/json"
+      }
+      body = { email_address: email_address }
+      response = post(base_uri, headers: headers, body: body.to_json)
 
-        private
-
-        def self.validate_parameters(from:, to:, subject:, body:)
-            raise ValidationError, "Email address to verify is missing" if  body[:email_address].nil? || body[:email_address].strip.empty?
-            raise ValidationError, "Body is missing" if body.nil? || body.strip.empty?
-        end
+      case response.code
+      when 400
+        raise BadRequestError, "Bad request: #{response.body}"
+      when 401
+        raise UnauthorizedError, "Unauthorized: #{response.body}"
+      when 200
+        JSON.parse(response.body)
+      else
+        raise GeneralAPIError, "API Error: #{response.body}"
+      end
     end
+  end
 end

@@ -32,6 +32,7 @@ Gem::Specification.new do |spec|
 
   # Uncomment to register a new dependency of your gem
   spec.add_dependency "httparty", "~> 0.21.0"
+  spec.add_dependency "zeitwerk"
 
   spec.add_development_dependency "rake", "~> 13.1.0"
   spec.add_development_dependency "rspec", "~> 3.12.0"
